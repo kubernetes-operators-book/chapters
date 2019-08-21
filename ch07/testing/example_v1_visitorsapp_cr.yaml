@@ -1,0 +1,7 @@
+apiVersion: example.com/v1
+kind: VisitorsApp
+metadata:
+  name: ex
+spec:
+  size: 1
+  title: "Custom Dashboard Title"

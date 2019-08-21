@@ -1,0 +1,131 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: ClusterServiceVersion
+metadata:
+  annotations:
+    alm-examples: '[{"apiVersion":"example.com/v1","kind":"VisitorsApp","metadata":{"name":"ex"},"spec":{"size":1,"title":"Custom
+      Dashboard Title"}}]'
+    capabilities: Basic Install
+  name: visitors-operator.v1.0.0
+  namespace: placeholder
+spec:
+  apiservicedefinitions: {}
+  customresourcedefinitions:
+    owned:
+    - kind: VisitorsApp
+      name: visitorsapps.example.com
+      version: v1
+      displayName: Visitors Site Application
+      description: Full stack for the Visitors Site
+      resources:
+      - kind: Service
+        version: v1
+      - kind: Deployment
+        version: v1
+      specDescriptors:
+      - displayName: Size
+        description: The number of backend pods to create
+        path: size
+      - displayName: Title
+        description: Title to display on the web UI dashboard
+        path: title
+      statusDescriptors:
+      - displayName: Backend Image
+        description: Full name and version of the image used to create the backend service
+        path: backendImage
+      - displayName: Frontend Image
+        description: Full name and version of the image used to create the frontend service
+        path: frontendImage
+  description: Operator for installing the Visitors Site application
+  displayName: Visitors Operator
+  install:
+    spec:
+      deployments:
+      - name: visitors-operator
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              name: visitors-operator
+          strategy: {}
+          template:
+            metadata:
+              labels:
+                name: visitors-operator
+            spec:
+              containers:
+              - command:
+                - visitors-operator
+                env:
+                - name: WATCH_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+                - name: POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+                - name: OPERATOR_NAME
+                  value: visitors-operator
+                image: jdob/visitors-operator:1.0.0
+                imagePullPolicy: Always
+                name: visitors-operator
+                resources: {}
+              serviceAccountName: visitors-operator
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          verbs:
+          - '*'
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - get
+          - create
+        - apiGroups:
+          - apps
+          resourceNames:
+          - visitors-operator
+          resources:
+          - deployments/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - example.com
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        serviceAccountName: visitors-operator
+    strategy: deployment
+  installModes:
+  - supported: true
+    type: OwnNamespace
+  - supported: true
+    type: SingleNamespace
+  - supported: false
+    type: MultiNamespace
+  - supported: true
+    type: AllNamespaces
+  maturity: alpha
+  provider: {}
+  version: 1.0.0
