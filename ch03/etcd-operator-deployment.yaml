@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    name: etcdoperator
+  name: etcd-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: etcd-operator
+  template:
+    metadata:
+      labels:
+        name: etcd-operator
+    spec:
+      containers:
+      - name: etcd-operator
+        image: quay.io/coreos/etcd-operator:v0.9.4
+        command:
+        - etcd-operator
+        - --create-crd=false
+        env:
+        - name: MY_POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        imagePullPolicy: IfNotPresent
+      serviceAccountName: etcd-operator-sa
