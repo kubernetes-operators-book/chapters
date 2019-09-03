@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: visitors-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: visitors
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: visitors
+        tier: frontend
+    spec:
+      containers:
+        - name: visitors-frontend
+          image: "jdob/visitors-webui:latest"
+          imagePullPolicy: Always
+          ports:
+            - name: visitors
+              containerPort: 3000
+          env:
+            - name: REACT_APP_TITLE
+              value: {{ .Values.frontend.title }}
