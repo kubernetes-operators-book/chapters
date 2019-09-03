@@ -1,0 +1,54 @@
+---
+- name: deploy backend
+  k8s:
+    definition:
+      kind: Deployment
+      apiVersion: apps/v1
+      metadata:
+        name: visitors-backend
+        namespace: "{{ namespace }}"
+      spec:
+        replicas: "{{ size }}"
+        selector:
+          matchLabels:
+            app: visitors
+            tier: backend
+        template:
+          metadata:
+            labels:
+              app: visitors
+              tier: backend
+          spec:
+            containers:
+              - name: visitors-backend
+                image: "jdob/visitors-service:latest"
+                imagePullPolicy: Always
+                ports:
+                  - name: visitors
+                    containerPort: 8000
+                env:
+                  - name: MYSQL_DATABASE
+                    value: "{{ db_name }}"
+                  - name: MYSQL_SERVICE_HOST
+                    value: "{{ db_service }}"
+- name: create backend service
+  k8s:
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: visitors-backend-service
+        namespace: "{{ namespace }}"
+        labels:
+          app: visitors
+          tier: backend
+      spec:
+        type: NodePort
+        ports:
+          - port: 8000
+            targetPort: 8000
+            nodePort: 30685
+            protocol: TCP
+        selector:
+          app: visitors
+          tier: backend

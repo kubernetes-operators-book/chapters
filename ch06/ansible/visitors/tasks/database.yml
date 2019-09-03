@@ -1,0 +1,54 @@
+---
+- name: deploy mysql
+  k8s:
+    definition:
+      kind: Deployment
+      apiVersion: apps/v1
+      metadata:
+        name: mysql
+        namespace: "{{ namespace }}"
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: visitors
+            tier: mysql
+        template:
+          metadata:
+            labels:
+              app: visitors
+              tier: mysql
+          spec:
+            containers:
+            - name: visitors-mysql
+              image: "mysql:5.7"
+              ports:
+                - name: mysql
+                  containerPort: 3306
+                  protocol: TCP
+              env:
+                - name: MYSQL_ROOT_PASSWORD
+                  value: password
+                - name: MYSQL_DATABASE
+                  value: "{{ db_name }}"
+                - name: MYSQL_USER
+                  value: "{{ db_user }}"
+                - name: MYSQL_PASSWORD
+                  value: "{{ db_pass }}"
+- name: create mysql service
+  k8s:
+    definition:
+      kind: Service
+      metadata:
+        name: "{{ db_service }}"
+        namespace: "{{ namespace }}"
+        labels:
+          app: visitors
+          tier: mysql
+      spec:
+        clusterIP: None
+        ports:
+          - port: 3306
+        selector:
+          app: visitors
+          tier: mysql

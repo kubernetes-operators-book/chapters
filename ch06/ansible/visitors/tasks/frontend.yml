@@ -1,0 +1,52 @@
+---
+- name: deploy frontend
+  k8s:
+    definition:
+      kind: Deployment
+      apiVersion: apps/v1
+      metadata:
+        name: visitors-frontend
+        namespace: "{{ namespace }}"
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: visitors
+            tier: frontend
+        template:
+          metadata:
+            labels:
+              app: visitors
+              tier: frontend
+          spec:
+            containers:
+              - name: visitors-frontend
+                image: "jdob/visitors-webui:latest"
+                imagePullPolicy: Always
+                ports:
+                  - name: visitors
+                    containerPort: 3000
+                env:
+                  - name: REACT_APP_TITLE
+                    value: "{{ title }}"
+- name: create frontend service
+  k8s:
+    definition:
+      kind: Service
+      apiVersion: v1
+      metadata:
+        name: visitors-frontend-service
+        namespace: "{{ namespace }}"
+        labels:
+          app: visitors
+          tier: frontend
+      spec:
+        type: NodePort
+        ports:
+          - port: 3000
+            targetPort: 3000
+            nodePort: 30686
+            protocol: TCP
+        selector:
+          app: visitors
+          tier: frontend
