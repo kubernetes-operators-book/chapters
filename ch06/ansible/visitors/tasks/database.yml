@@ -1,4 +1,16 @@
 ---
+- name: create database authentication secret
+  k8s:
+    definition:
+      kind: Secret
+      apiVersion: v1
+      metadata:
+        name: mysql-auth
+        namespace: "{{ namespace }}"
+      type: Opaque
+      stringData:
+        username: "{{ db_user }}"
+        password: "{{ db_pass }}"
 - name: deploy mysql
   k8s:
     definition:
@@ -32,9 +44,15 @@
                 - name: MYSQL_DATABASE
                   value: "{{ db_name }}"
                 - name: MYSQL_USER
-                  value: "{{ db_user }}"
+                  valueFrom:
+                    secretKeyRef:
+                      name: mysql-auth
+                      key: username
                 - name: MYSQL_PASSWORD
-                  value: "{{ db_pass }}"
+                  valueFrom:
+                    secretKeyRef:
+                      name: mysql-auth
+                      key: password
 - name: create mysql service
   k8s:
     definition:

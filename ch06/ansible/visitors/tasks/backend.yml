@@ -31,6 +31,16 @@
                     value: "{{ db_name }}"
                   - name: MYSQL_SERVICE_HOST
                     value: "{{ db_service }}"
+                  - name: MYSQL_USERNAME
+                    valueFrom:
+                      secretKeyRef:
+                        name: mysql-auth
+                        key: username
+                  - name: MYSQL_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: mysql-auth
+                        key: password
 - name: create backend service
   k8s:
     definition:
