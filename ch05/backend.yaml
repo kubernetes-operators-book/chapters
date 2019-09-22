@@ -25,12 +25,18 @@ spec:
           env:
             - name: MYSQL_DATABASE
               value: visitors_db
-            - name: MYSQL_USERNAME
-              value: visitors_user
-            - name: MYSQL_PASSWORD
-              value: visitors_pass
             - name: MYSQL_SERVICE_HOST
               value: mysql-service
+            - name: MYSQL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-auth
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-auth
+                  key: password
 ---
 apiVersion: v1
 kind: Service

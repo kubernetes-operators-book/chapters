@@ -1,4 +1,13 @@
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-auth
+type: Opaque
+stringData:
+  username: visitors-user
+  password: visitors-pass
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,9 +38,15 @@ spec:
             - name: MYSQL_DATABASE
               value: visitors_db
             - name: MYSQL_USER
-              value: visitors_user
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-auth
+                  key: username
             - name: MYSQL_PASSWORD
-              value: visitors_pass
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-auth
+                  key: password
 ---
 apiVersion: v1
 kind: Service
