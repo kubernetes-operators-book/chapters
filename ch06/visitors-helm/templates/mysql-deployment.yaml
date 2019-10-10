@@ -28,6 +28,12 @@ spec:
             - name: MYSQL_DATABASE
               value: visitors
             - name: MYSQL_USER
-              value: visitors
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-auth
+                  key: username
             - name: MYSQL_PASSWORD
-              value: visitors
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-auth
+                  key: password

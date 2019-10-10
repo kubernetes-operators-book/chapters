@@ -26,3 +26,13 @@ spec:
               value: visitors
             - name: MYSQL_SERVICE_HOST
               value: mysql-service
+            - name: MYSQL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-auth
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-auth
+                  key: password
