@@ -21,7 +21,7 @@
           spec:
             containers:
               - name: visitors-backend
-                image: "jdob/visitors-service:latest"
+                image: "jdob/visitors-service:1.0.0"
                 imagePullPolicy: Always
                 ports:
                   - name: visitors
