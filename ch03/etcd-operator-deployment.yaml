@@ -17,6 +17,7 @@ spec:
         image: quay.io/coreos/etcd-operator:v0.9.4
         command:
         - etcd-operator
+        - --create-crd=false
         env:
         - name: MY_POD_NAMESPACE
           valueFrom:
