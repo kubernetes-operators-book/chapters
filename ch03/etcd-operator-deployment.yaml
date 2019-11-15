@@ -26,3 +26,5 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        imagePullPolicy: IfNotPresent
+      serviceAccountName: etcd-operator-sa
