@@ -17,7 +17,7 @@ import (
 
 const frontendPort = 3000
 const frontendServicePort = 30686
-const frontendImage = "jdob/visitors-webui:latest"
+const frontendImage = "jdob/visitors-webui:1.0.0"
 
 func frontendDeploymentName(v *examplev1.VisitorsApp) string {
 	return v.Name + "-frontend"

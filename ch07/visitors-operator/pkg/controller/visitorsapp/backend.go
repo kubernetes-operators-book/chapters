@@ -17,7 +17,7 @@ import (
 
 const backendPort = 8000
 const backendServicePort = 30685
-const backendImage = "jdob/visitors-service:latest"
+const backendImage = "jdob/visitors-service:1.0.0"
 
 func backendDeploymentName(v *examplev1.VisitorsApp) string {
 	return v.Name + "-backend"
@@ -30,6 +30,20 @@ func backendServiceName(v *examplev1.VisitorsApp) string {
 func (r *ReconcileVisitorsApp) backendDeployment(v *examplev1.VisitorsApp) *appsv1.Deployment {
 	labels := labels(v, "backend")
 	size := v.Spec.Size
+
+	userSecret := &corev1.EnvVarSource{
+		SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: corev1.LocalObjectReference{Name: mysqlAuthName()},
+			Key: "username",
+		},
+	}
+
+	passwordSecret := &corev1.EnvVarSource{
+		SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: corev1.LocalObjectReference{Name: mysqlAuthName()},
+			Key: "password",
+		},
+	}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -62,6 +76,14 @@ func (r *ReconcileVisitorsApp) backendDeployment(v *examplev1.VisitorsApp) *apps
 							{
 								Name:	"MYSQL_SERVICE_HOST",
 								Value:	mysqlServiceName(),
+							},
+							{
+								Name:	"MYSQL_USERNAME",
+								ValueFrom: userSecret,
+							},
+							{
+								Name:	"MYSQL_PASSWORD",
+								ValueFrom: passwordSecret,
 							},
 						},
 					}},

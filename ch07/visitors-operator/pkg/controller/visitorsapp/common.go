@@ -14,14 +14,13 @@ import (
 
 func (r *ReconcileVisitorsApp) ensureDeployment(request reconcile.Request,
 	instance *examplev1.VisitorsApp,
-	name string,
 	dep *appsv1.Deployment,
 ) (*reconcile.Result, error) {
 
 	// See if deployment already exists and create if it doesn't
 	found := &appsv1.Deployment{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{
-		Name:      name,
+		Name:      dep.Name,
 		Namespace: instance.Namespace,
 	}, found)
 	if err != nil && errors.IsNotFound(err) {
@@ -49,12 +48,11 @@ func (r *ReconcileVisitorsApp) ensureDeployment(request reconcile.Request,
 
 func (r *ReconcileVisitorsApp) ensureService(request reconcile.Request,
 	instance *examplev1.VisitorsApp,
-	name string,
 	s *corev1.Service,
 ) (*reconcile.Result, error) {
 	found := &corev1.Service{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{
-		Name:      name,
+		Name:      s.Name,
 		Namespace: instance.Namespace,
 	}, found)
 	if err != nil && errors.IsNotFound(err) {
@@ -74,6 +72,37 @@ func (r *ReconcileVisitorsApp) ensureService(request reconcile.Request,
 	} else if err != nil {
 		// Error that isn't due to the service not existing
 		log.Error(err, "Failed to get Service")
+		return &reconcile.Result{}, err
+	}
+
+	return nil, nil
+}
+
+func (r *ReconcileVisitorsApp) ensureSecret(request reconcile.Request,
+	instance *examplev1.VisitorsApp,
+	s *corev1.Secret,
+) (*reconcile.Result, error) {
+	found := &corev1.Secret{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{
+		Name:		s.Name,
+		Namespace:	instance.Namespace,
+	}, found)
+	if err != nil && errors.IsNotFound(err) {
+		// Create the secret
+		log.Info("Creating a new secret", "Secret.Namespace", s.Namespace, "Secret.Name", s.Name)
+		err = r.client.Create(context.TODO(), s)
+
+		if err != nil {
+			// Creation failed
+			log.Error(err, "Failed to create new Secret", "Secret.Namespace", s.Namespace, "Secret.Name", s.Name)
+			return &reconcile.Result{}, err
+		} else {
+			// Creation was successful
+			return nil, nil
+		}
+	} else if err != nil {
+		// Error that isn't due to the secret not existing
+		log.Error(err, "Failed to get Secret")
 		return &reconcile.Result{}, err
 	}
 

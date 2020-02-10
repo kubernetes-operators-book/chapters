@@ -2,7 +2,6 @@ package visitorsapp
 
 import (
 	"context"
-	"time"
 
 	examplev1 "github.com/jdob/visitors-operator/pkg/apis/example/v1"
 
@@ -10,7 +9,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -22,16 +20,21 @@ func mysqlServiceName() string {
 	return "mysql-service"
 }
 
-func (r *ReconcileVisitorsApp) secret(v *examplev1.VisitorsApp) *corev1.Secret {
+func mysqlAuthName() string {
+	return "mysql-auth"
+}
+
+func (r *ReconcileVisitorsApp) mysqlAuthSecret(v *examplev1.VisitorsApp) *corev1.Secret {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: v.Namespace,
+			Name:		mysqlAuthName(),
+			Namespace:	v.Namespace,
 		},
 		Type: "Opaque",
 		StringData: map[string]string{
 			"username": "visitors-user",
 			"password": "visitors-pass",
-		}
+		},
 	}
 	controllerutil.SetControllerReference(v, secret, r.scheme)
 	return secret
@@ -40,6 +43,20 @@ func (r *ReconcileVisitorsApp) secret(v *examplev1.VisitorsApp) *corev1.Secret {
 func (r *ReconcileVisitorsApp) mysqlDeployment(v *examplev1.VisitorsApp) *appsv1.Deployment {
 	labels := labels(v, "mysql")
 	size := int32(1)
+
+	userSecret := &corev1.EnvVarSource{
+		SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: corev1.LocalObjectReference{Name: mysqlAuthName()},
+			Key: "username",
+		},
+	}
+
+	passwordSecret := &corev1.EnvVarSource{
+		SecretKeyRef: &corev1.SecretKeySelector{
+			LocalObjectReference: corev1.LocalObjectReference{Name: mysqlAuthName()},
+			Key: "password",
+		},
+	}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -74,11 +91,11 @@ func (r *ReconcileVisitorsApp) mysqlDeployment(v *examplev1.VisitorsApp) *appsv1
 							},
 							{
 								Name:	"MYSQL_USER",
-								Value:	"visitors",
+								ValueFrom: userSecret,
 							},
 							{
 								Name:	"MYSQL_PASSWORD",
-								Value:	"visitors",
+								ValueFrom: passwordSecret,
 							},
 						},
 					}},
@@ -112,28 +129,23 @@ func (r *ReconcileVisitorsApp) mysqlService(v *examplev1.VisitorsApp) *corev1.Se
 	return s
 }
 
-// Blocks until the MySQL deployment has finished
-func (r *ReconcileVisitorsApp) waitForMysql(v *examplev1.VisitorsApp) (error) {
+// Returns whether or not the MySQL deployment is running
+func (r *ReconcileVisitorsApp) isMysqlUp(v *examplev1.VisitorsApp) (bool) {
 	deployment := &appsv1.Deployment{}
-	err := wait.Poll(1*time.Second, 1*time.Minute,
-		func() (done bool, err error) {
-			err = r.client.Get(context.TODO(), types.NamespacedName{
-				Name: mysqlDeploymentName(),
-				Namespace: v.Namespace,
-				}, deployment)
-			if err != nil {
-				log.Error(err, "Deployment mysql not found")
-				return false, nil
-			}
 
-			if deployment.Status.ReadyReplicas == 1 {
-				log.Info("MySQL ready replica count met")
-				return true, nil
-			}
+	err := r.client.Get(context.TODO(), types.NamespacedName{
+		Name: mysqlDeploymentName(),
+		Namespace: v.Namespace,
+		}, deployment)
 
-			log.Info("Waiting for MySQL to start")
-			return false, nil
-		},
-	)
-	return err
+	if err != nil {
+		log.Error(err, "Deployment mysql not found")
+		return false
+	}
+
+	if deployment.Status.ReadyReplicas == 1 {
+		return true
+	}
+
+	return false
 }
