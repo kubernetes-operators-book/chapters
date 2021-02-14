@@ -25,6 +25,8 @@ spec:
           env:
             - name: MYSQL_DATABASE
               value: visitors_db
+            - name: MYSQL_SERVICE_PORT
+              value: "3306"
             - name: MYSQL_SERVICE_HOST
               value: mysql-service
             - name: MYSQL_USERNAME
