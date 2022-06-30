@@ -24,8 +24,14 @@ spec:
         app: visitors
         tier: mysql
     spec:
+      volumes:
+      - name: mysql-vol
+        emptyDir: {}
       containers:
         - name: visitors-mysql
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: mysql-vol
           image: "mysql:5.7"
           imagePullPolicy: Always
           ports:
